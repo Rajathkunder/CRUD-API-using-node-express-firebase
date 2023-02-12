@@ -6,3 +6,4 @@ Blog-post API with nodejs, express and firebase
 4. Fetch all posts
 5. Fetch a post by id
 6. Fetch all posts of a specific userId
+7. API tested using Thunder Client
