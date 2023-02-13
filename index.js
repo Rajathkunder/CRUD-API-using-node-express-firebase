@@ -2,42 +2,44 @@ const express = require('express');
 const bodyParser = require('body-parser');
 //const firebase = require("firebase");
 const firebase = require('firebase-admin');
-
+var serviceAccount = require("./new-try-2ad9e-firebase-adminsdk-z1lk1-79e54c61cd.json");
 const app = express();
 app.use(bodyParser.json());
 
 const firebaseConfig = {
-    apiKey: "AIzaSyBHaNuttGXFRcRd2bZIwcApjpdc7QeKINs",
-    authDomain: "new-try-2ad9e.firebaseapp.com",
-    databaseURL: "https://new-try-2ad9e-default-rtdb.firebaseio.com",
-    projectId: "new-try-2ad9e",
-    storageBucket: "new-try-2ad9e.appspot.com",
-    messagingSenderId: "348439755714",
-    appId: "1:348439755714:web:731ddfc69b6350344ab45b",
-    measurementId: "G-7XJY5F12B0"
-  };
+  credential: firebase.credential.cert(serviceAccount),
+  apiKey: "AIzaSyBHaNuttGXFRcRd2bZIwcApjpdc7QeKINs",
+  authDomain: "new-try-2ad9e.firebaseapp.com",
+  databaseURL: "https://new-try-2ad9e-default-rtdb.firebaseio.com",
+  projectId: "new-try-2ad9e",
+  storageBucket: "new-try-2ad9e.appspot.com",
+  messagingSenderId: "348439755714",
+  appId: "1:348439755714:web:731ddfc69b6350344ab45b",
+  measurementId: "G-7XJY5F12B0"
+};
 
 firebase.initializeApp(firebaseConfig);
-const database = firebase.database();
+const db= firebase.database();
 //adding
 app.post('/posts', async (req, res) => {
-    try {
-      const post = req.body;
-      post.userId = req.user.uid;
-      const newPost = await db.collection('posts').add(post);
-      res.status(201).json({
-        message: 'Post created successfully',
-        postId: newPost.id
-      });
-    } catch (error) {
-      res.status(500).json({ error: 'Error creating post' });
-    }
+    
+      const userId = req.body.userId;
+      const posts = req.body.post;
+      //post.userId = req.user.uid;
+      //const {userId,post}=posts;
+      console.log(userId,posts);
+      const postsRef = db.ref("posts");
+postsRef.push({
+  userId,
+  posts
+});
+     
   });
 //retrieving all posts
 app.get('/posts', async (req, res) => {
-    try {
+    
       const posts = [];
-      const snapshot = await db.collection('posts').get();
+      const snapshot = await db.ref('posts').get();
       snapshot.forEach((doc) => {
         posts.push({
           postId: doc.id,
@@ -45,9 +47,7 @@ app.get('/posts', async (req, res) => {
         });
       });
       res.status(200).json(posts);
-    } catch (error) {
-      res.status(500).json({ error: 'Error fetching posts' });
-    }
+   
   });
   //updating
   app.put('/posts/:postId', async (req, res) => {
