@@ -92,20 +92,19 @@ app.get('/posts/:id', async (req, res) => {
 
 
   //. Fetch all posts of a specific userId
-  app.get('/posts', async (req, res) => {
-    try {
-      const userId = req.query.userId;
-      const postsRef = db.collection('posts').where('userId', '==', userId);
-      const snapshot = await postsRef.get();
-      const posts = [];
-      snapshot.forEach(doc => {
-        posts.push(doc.data());
-      });
-      res.status(200).json({ posts });
-    } catch (error) {
-      res.status(500).json({ error: 'Error fetching posts' });
-    }
-  });
+  app.get('/userposts/:userId', async (req, res) => {
+    const userId = req.params.userId;
+    const posts = [];
+    const snapshot = await db.ref('posts').orderByChild('userId').equalTo(userId).once('value');
+    snapshot.forEach((childSnapshot) => {
+        posts.push({
+            postId: childSnapshot.key,
+            ...childSnapshot.val()
+        });
+    });
+    res.status(200).json(posts);
+});
+
   
 
 
