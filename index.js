@@ -50,55 +50,46 @@ app.get('/posts', async (req, res) => {
 });
   //updating
   app.put('/posts/:postId', async (req, res) => {
-    try {
-      const postId = req.params.postId;
-      const post = req.body;
-      const postRef = db.collection('posts').doc(postId);
-      const doc = await postRef.get();
-      if (!doc.exists) {
-        return res.status(404).json({ error: 'Post not found' });
+    const postId = req.params.postId;
+    const userId = req.body.userId;
+    const postData = req.body.post;
+    const postRef = db.ref(`posts/${postId}`);
+    const postSnapshot = await postRef.once('value');
+    if (postSnapshot.val().userId !== userId) {
+      return res.status(401).json({ error: 'Unauthorized' });
     }
-    if (doc.data().userId !== req.user.uid) {
-    return res.status(403).json({ error: 'Unauthorized access' });
-    }
-    await postRef.update(post);
-    res.status(200).json({ message: 'Post updated successfully' });
-    } catch (error) {
-    res.status(500).json({ error: 'Error updating post' });
-    }
-    });
+    await postRef.update({ ...postData });
+    res.status(200).json({ postId, ...postData });
+  });
     //deleting
     app.delete('/posts/:postId', async (req, res) => {
-        try {
-        const postId = req.params.postId;
-        const postRef = db.collection('posts').doc(postId);
-        const doc = await postRef.get();
-        if (!doc.exists) {
-        return res.status(404).json({ error: 'Post not found' });
-        }
-        if (doc.data().userId !== req.user.uid) {
-        return res.status(403).json({ error: 'Unauthorized access' });
-        }
-        await postRef.delete();
-        res.status(200).json({ message: 'Post deleted successfully' });
-        } catch (error) {
-        res.status(500).json({ error: 'Error deleting post' });
-        }
-        });
-//fetch a post by id
-app.get('/posts/:postId', async (req, res) => {
-    try {
       const postId = req.params.postId;
-      const postRef = db.collection('posts').doc(postId);
-      const doc = await postRef.get();
-      if (!doc.exists) {
-        return res.status(404).json({ error: 'Post not found' });
+      const userId = req.body.userId;
+      const postRef = db.ref(`posts/${postId}`);
+      const postSnapshot = await postRef.once('value');
+      if (postSnapshot.val().userId !== userId) {
+        return res.status(401).json({ error: 'Unauthorized' });
       }
-      res.status(200).json({ post: doc.data() });
-    } catch (error) {
-      res.status(500).json({ error: 'Error fetching post' });
-    }
-  });
+      await postRef.remove();
+      res.status(200).json({ message: 'Post deleted successfully' });
+    });
+    
+//fetch a post by id
+app.get('/posts/:id', async (req, res) => {
+  const postId = req.params.id;
+  const postRef = db.ref(`posts/${postId}`);
+  const post = await postRef.once('value');
+
+  if (post.exists()) {
+    res.status(200).json({
+      postId: post.key,
+      ...post.val()
+    });
+  } else {
+    res.status(404).json({ error: 'Post not found' });
+  }
+});
+
 
   //. Fetch all posts of a specific userId
   app.get('/posts', async (req, res) => {
