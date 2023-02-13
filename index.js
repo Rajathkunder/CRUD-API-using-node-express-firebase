@@ -37,18 +37,17 @@ postsRef.push({
   });
 //retrieving all posts
 app.get('/posts', async (req, res) => {
-    
-      const posts = [];
-      const snapshot = await db.ref('posts').get();
-      snapshot.forEach((doc) => {
-        posts.push({
-          postId: doc.id,
-          ...doc.data()
-        });
-      });
-      res.status(200).json(posts);
-   
+  const posts = [];
+  const snapshot = await db.ref('posts').once('value');
+  snapshot.forEach((childSnapshot) => {
+    const post = childSnapshot.val();
+    posts.push({
+      postId: childSnapshot.key,
+      ...post
+    });
   });
+  res.status(200).json(posts);
+});
   //updating
   app.put('/posts/:postId', async (req, res) => {
     try {
